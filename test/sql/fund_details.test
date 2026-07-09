@@ -1,0 +1,43 @@
+# name: test/sql/fund_details.test
+# description: firsttrust.fund_details(fund) — one-row summary snapshot: typed schema + live invariants.
+# group: [sql]
+
+require-env VGI_TEST_WORKER
+
+statement ok
+ATTACH 'firsttrust' AS ft (TYPE vgi, LOCATION '${VGI_TEST_WORKER}');
+
+statement ok
+SET search_path='ft.main';
+
+# --- Schema: DESCRIBE binds only (no network), so these are fully deterministic. ---
+
+query T
+SELECT string_agg(column_name, ',') FROM (DESCRIBE SELECT * FROM ft.fund_details('FTCS'));
+----
+ticker,fund_name,investment_advisor,net_assets,shares_outstanding,daily_volume,num_holdings,expense_ratio_percent,net_expense_ratio_percent,objective
+
+query T
+SELECT column_type FROM (DESCRIBE SELECT * FROM ft.fund_details('FTCS')) WHERE column_name = 'num_holdings';
+----
+BIGINT
+
+query T
+SELECT column_type FROM (DESCRIBE SELECT * FROM ft.fund_details('FTCS')) WHERE column_name = 'expense_ratio_percent';
+----
+DOUBLE
+
+# --- Live invariants (hit First Trust). ---
+
+# fund_details returns exactly one row with a positive expense ratio and net assets for FTCS.
+query I
+SELECT (count(*) = 1 AND bool_and(expense_ratio_percent > 0 AND net_assets > 0))::INT
+FROM ft.fund_details('FTCS');
+----
+1
+
+# The resolved ticker echoes back upper-cased even when given lower-case.
+query T
+SELECT ticker FROM ft.fund_details('ftcs');
+----
+FTCS
