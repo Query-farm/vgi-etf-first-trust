@@ -44,8 +44,8 @@ SELECT (count(*) >= 1)::INT FROM (SELECT * FROM ft.holdings LIMIT 5);
 ----
 1
 
-# The backing scan function also works directly (pushdown).
+# The callable form of the table (same name, backing scan) also works directly (pushdown).
 query I
-SELECT (count(*) > 40)::INT FROM ft.holdings_scan() WHERE fund_ticker = 'FTCS';
+SELECT (count(*) > 40)::INT FROM ft.holdings() WHERE fund_ticker = 'FTCS';
 ----
 1

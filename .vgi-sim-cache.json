@@ -1,0 +1,100 @@
+{
+  "95017eb1358c094d": {
+    "name": "ftcs_exists",
+    "outcome": "pass",
+    "reason": "check_sql asserted true",
+    "friction": [],
+    "queries": 1,
+    "grader": "check_sql",
+    "path": {
+      "discovery_calls": 1,
+      "queries": 1,
+      "bind_errors": 0,
+      "requirement_errors": 0,
+      "runtime_errors": 0,
+      "blocked": 0,
+      "redundant_describes": 0,
+      "not_found": 0,
+      "hit_ceiling": false,
+      "score": 100
+    },
+    "suggestions": [],
+    "attempts_used": 1
+  },
+  "1a467673880621db": {
+    "name": "ftcs_top_holding",
+    "outcome": "pass",
+    "reason": "check_sql asserted true",
+    "friction": [
+      "describe_table on holdings returned a truncated doc_md and never showed the column list, so column names (name, ticker, weight_percent, as_of_date) had to be inferred from prose in the table comment rather than read from a schema listing."
+    ],
+    "queries": 1,
+    "grader": "check_sql",
+    "path": {
+      "discovery_calls": 1,
+      "queries": 1,
+      "bind_errors": 0,
+      "requirement_errors": 0,
+      "runtime_errors": 0,
+      "blocked": 0,
+      "redundant_describes": 0,
+      "not_found": 0,
+      "hit_ceiling": false,
+      "score": 100
+    },
+    "suggestions": [
+      "Analyst noted: describe_table on holdings returned a truncated doc_md and never showed the column list, so column names (name, ticker, weight_percent, as_of_date) had to be inferred from prose in the table comment rather than read from a schema listing."
+    ],
+    "attempts_used": 1
+  },
+  "f0e7ee4e943eb76d": {
+    "name": "ftcs_holdings_function",
+    "outcome": "pass",
+    "reason": "check_sql asserted true",
+    "friction": [
+      "describe_table on holdings returned a long prose comment/doc_md but the column list was truncated before any column names appeared, so I had to confirm column names by running a query rather than reading them from the description."
+    ],
+    "queries": 1,
+    "grader": "check_sql",
+    "path": {
+      "discovery_calls": 2,
+      "queries": 1,
+      "bind_errors": 0,
+      "requirement_errors": 0,
+      "runtime_errors": 0,
+      "blocked": 0,
+      "redundant_describes": 0,
+      "not_found": 0,
+      "hit_ceiling": false,
+      "score": 100
+    },
+    "suggestions": [
+      "Analyst noted: describe_table on holdings returned a long prose comment/doc_md but the column list was truncated before any column names appeared, so I had to confirm column names by running a query rather than reading them from the description."
+    ],
+    "attempts_used": 1
+  },
+  "7e0482f8aa91e6aa": {
+    "name": "ftcs_expense_ratio",
+    "outcome": "pass",
+    "reason": "check_sql asserted true",
+    "friction": [],
+    "queries": 1,
+    "grader": "check_sql",
+    "path": {
+      "discovery_calls": 2,
+      "queries": 1,
+      "bind_errors": 0,
+      "requirement_errors": 0,
+      "runtime_errors": 0,
+      "blocked": 0,
+      "redundant_describes": 0,
+      "not_found": 1,
+      "hit_ceiling": false,
+      "score": 92
+    },
+    "suggestions": [
+      "Agent looked up an object that doesn't exist \u2014 the metadata implies a name that isn't there; align docs/examples with the real schema."
+    ],
+    "attempts_used": 1
+  }
+}

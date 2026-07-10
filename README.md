@@ -154,8 +154,9 @@ bond funds), `shares_held`, `market_value`. Rows come back **weight-descending**
 (DATE) is the page's published date — First Trust publishes **current holdings only**, so there is
 no historical time travel. Join `holdings.fund_ticker` to `products.ticker` for fund-level facts.
 
-> A backing `holdings_scan()` function is also exposed (it's what the table scans, and it's what
-> lets DuckDB push the `fund_ticker` filter) — prefer the `holdings` table.
+> The `holdings` table's backing scan is also exposed as a same-named table function, so
+> `FROM holdings()` returns the identical rows (it's what lets DuckDB push the `fund_ticker`
+> filter into the scan) — prefer the `holdings` table.
 
 ### fund_details(fund) — a deep one-row snapshot
 

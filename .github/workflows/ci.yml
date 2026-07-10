@@ -56,8 +56,10 @@ jobs:
         run: ./run_tests.sh
 
   # Metadata-quality gate (vgi-lint): scores the worker's catalog/schema/function docs,
-  # tags, categories, per-arg docs, and examples. execute:false keeps it deterministic —
-  # the live-network behavior is covered by the e2e job, not here. fail-on info = strict.
+  # tags, categories, per-arg docs, and examples, AND runs the VGI9xx execution rules
+  # against the live worker. This worker is KEYLESS — it needs only plain HTTP egress to
+  # First Trust's public pages (no secret), which this runner has (the e2e job hits the
+  # same source), so execution runs here rather than being deferred. fail-on info = strict.
   lint:
     name: metadata quality (vgi-lint)
     runs-on: ubuntu-latest
@@ -72,4 +74,4 @@ jobs:
           # No version pin — always lint against the latest vgi-lint release.
           location: "${{ github.workspace }}/bin/vgi-etf-first-trust-worker"
           fail-on: info
-          execute: "false"
+          execute: "true"

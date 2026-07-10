@@ -161,9 +161,10 @@ export function makeProductsScan(client: FirsttrustClient) {
 export function makeHoldingsScan(client: FirsttrustClient) {
   const schema = holdingsSchema();
   return defineTableFunction<Record<string, never>, Record<string, never>>({
-    name: "holdings_scan",
+    name: "holdings",
     description:
-      "Backing scan for the holdings table — prefer the `holdings` table. Detailed fund " +
+      "The callable form of the holdings table — querying holdings() returns the same rows as " +
+      "the `holdings` table; prefer the table. Detailed fund " +
       "holdings, hive-partitioned by fund_ticker: filter WHERE fund_ticker = 'FTCS' (or " +
       "fund_ticker IN (…)) for specific funds, or scan with no filter to stream every fund's " +
       "holdings. weight_percent is in percent points; First Trust publishes current holdings only.",
@@ -216,21 +217,23 @@ export function makeHoldingsScan(client: FirsttrustClient) {
       }
     },
     examples: [
-      { sql: "SELECT name, weight_percent FROM firsttrust.main.holdings_scan() WHERE fund_ticker = 'FTCS' ORDER BY weight_percent DESC LIMIT 10", description: "Top 10 holdings of FTCS via the backing scan" },
-      { sql: "SELECT fund_ticker, count(*) FROM firsttrust.main.holdings_scan() WHERE fund_ticker IN ('FTCS', 'AIRR') GROUP BY fund_ticker", description: "Two partitions at once (fan-out)" },
+      { sql: "SELECT name, weight_percent FROM firsttrust.main.holdings() WHERE fund_ticker = 'FTCS' ORDER BY weight_percent DESC LIMIT 10", description: "Top 10 holdings of FTCS via the backing scan" },
+      { sql: "SELECT fund_ticker, count(*) FROM firsttrust.main.holdings() WHERE fund_ticker IN ('FTCS', 'AIRR') GROUP BY fund_ticker", description: "Two partitions at once (fan-out)" },
     ],
     tags: {
       "vgi.category": "holdings",
       "vgi.doc_llm":
-        "The backing scan for the `holdings` table. Prefer querying the `holdings` table. " +
+        "The callable form of the `holdings` table: querying holdings() returns exactly the same " +
+        "rows as the `holdings` table — prefer the table for readability. " +
         "Hive-partitioned by fund_ticker (the fund's ticker, distinct from the constituent " +
         "`ticker` column): filter WHERE fund_ticker = '…' (or fund_ticker IN (…)) for specific " +
         "funds, or scan with no filter to stream every fund (~300 partitions — slow). " +
         "weight_percent is in percent points (2.59 = 2.59%). First Trust publishes current " +
         "holdings only, so there is no historical as-of date.",
       "vgi.doc_md":
-        "## holdings_scan\n\n" +
-        "The backing scan for the **`holdings` table** — prefer the table. Hive-partitioned by " +
+        "## holdings()\n\n" +
+        "The callable form of the **`holdings` table** — calling `holdings()` returns the same rows " +
+        "as the table; prefer the table. Hive-partitioned by " +
         "`fund_ticker`: filter `WHERE fund_ticker = 'FTCS'` for one fund, or scan with no filter " +
         "to stream every fund (see the example queries). `fund_ticker` is distinct from the " +
         "constituent `ticker` column.",

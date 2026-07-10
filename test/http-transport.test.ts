@@ -12,7 +12,7 @@
 //
 // Coverage:
 //   - protocol handshake over HTTP (catalogs / attach)                 [network-free]
-//   - the products/holdings tables + holdings_scan + fund_details are exposed over HTTP [network-free]
+//   - the products/holdings tables + holdings() + fund_details are exposed over HTTP [network-free]
 //   - a full products scan round-trips over HTTP                       [live: First Trust]
 //
 // The final scan hits First Trust live (like the haybarn live-invariant asserts) — fine for an
@@ -72,15 +72,16 @@ test("catalog is discoverable over HTTP", async () => {
   }
 });
 
-test("the tables + holdings_scan + fund_details are exposed over HTTP", async () => {
+test("the tables + holdings() + fund_details are exposed over HTTP", async () => {
   const rpc = httpConnect(baseUrl, { prefix: PREFIX });
   try {
     const client = new VgiClient(rpc);
     const attach = await client.catalogAttach("firsttrust");
     const fns = await client.schemaContentsFunctions(attach.attach_opaque_data, "main", "TABLE_FUNCTION");
-    // holdings_scan is listed (required so the extension pushes the ticker filter into the
-    // holdings table); fund_details is listed (a callable function); products' scan stays unlisted.
-    expect(fns.map((f) => f.name).sort()).toEqual(["fund_details", "holdings_scan"]);
+    // The holdings backing scan is listed (required so the extension pushes the ticker filter into
+    // the holdings table) under the SAME name as the table (`holdings`), so it reads as the table's
+    // callable form; fund_details is a callable function; products' scan stays unlisted.
+    expect(fns.map((f) => f.name).sort()).toEqual(["fund_details", "holdings"]);
     // products and holdings are base TABLES.
     const tables = await client.schemaContentsTables(attach.attach_opaque_data, "main");
     expect(tables.map((t) => t.name).sort()).toEqual(["holdings", "products"]);

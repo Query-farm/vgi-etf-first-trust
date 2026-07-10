@@ -171,7 +171,7 @@ const CATALOG_TAGS: Record<string, string> = {
   ]),
   // Agent-suitability suite (catalog only). Each task carries a deterministic check_sql that
   // asserts specific ground truth; reference_sql is deliberately omitted (live data). One task
-  // per callable surface (products, holdings, holdings_scan, fund_details) satisfies VGI520.
+  // per callable surface (products, holdings table + holdings() function, fund_details) satisfies VGI520.
   "vgi.agent_test_tasks": JSON.stringify([
     {
       name: "ftcs_exists",
@@ -192,10 +192,10 @@ const CATALOG_TAGS: Record<string, string> = {
       success_criteria: "The answer names FTCS's top holding by weight, obtained from the holdings table.",
     },
     {
-      name: "ftcs_holdings_scan",
-      prompt: "Using the holdings backing scan, list a few FTCS constituents by weight.",
-      check_sql: "SELECT count(*) > 0 FROM firsttrust.main.holdings_scan() WHERE fund_ticker = 'FTCS'",
-      success_criteria: "The answer returns FTCS constituents via holdings_scan() filtered by fund_ticker.",
+      name: "ftcs_holdings_function",
+      prompt: "Using the holdings() table function, list a few FTCS constituents by weight.",
+      check_sql: "SELECT count(*) > 0 FROM firsttrust.main.holdings() WHERE fund_ticker = 'FTCS'",
+      success_criteria: "The answer returns FTCS constituents via the holdings() function filtered by fund_ticker.",
     },
   ]),
 };
@@ -275,6 +275,10 @@ export function makeCatalog(
             arguments: new Arguments([], new Map()),
             // fund_ticker is always populated (the scan tags every row with its fund).
             notNull: ["fund_ticker"],
+            // Advisory composite identity of a holding row: the fund (fund_ticker) plus the
+            // constituent security's CUSIP — the canonical, per-fund-unique security identifier.
+            // Advisory only (not enforced on the live scan), like products' [ticker].
+            primaryKey: [["fund_ticker"], ["cusip"]],
             // Hive partition key: fund_ticker. A WHERE fund_ticker = … / IN (…) filter is pushed
             // down to fetch just those funds; an unfiltered scan streams every fund (all partitions).
             // First Trust publishes current holdings only, so there is NO time travel.

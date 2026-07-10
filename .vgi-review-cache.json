@@ -1,0 +1,84 @@
+{
+  "c8b93cf8519344b5": {
+    "object": "firsttrust",
+    "kind": "catalog",
+    "scores": {
+      "accuracy": 5,
+      "clarity": 5,
+      "completeness": 4,
+      "audience_fit": 4
+    },
+    "suggestions": [
+      "State the scale and cost profile an agent needs to plan: ~316 funds in `products` (one cheap cached page, ~24h), one HTTP page-fetch per fund for `holdings`, and one 2 MB summary page per call to `fund_details` \u2014 so an unfiltered `holdings` scan is ~316 fetches.",
+      "Name the freshness contract explicitly: the catalog page is memoized for 24 hours while holdings and fund_details are fetched live on every query, so repeated `products` reads within a session can be stale relative to `fund_details`.",
+      "Add the failure mode: a fund whose holdings page 404s or is empty is silently skipped in an all-funds scan rather than raising, so `SELECT count(DISTINCT fund_ticker) FROM holdings` can be less than `count(*) FROM products`."
+    ],
+    "summary": "Accurate and well-pitched entry point; missing the cost/freshness/partial-failure facts an agent needs before it issues a wide scan."
+  },
+  "bdcf631b3ecbc72e": {
+    "object": "firsttrust.main",
+    "kind": "schema",
+    "scores": {
+      "accuracy": 5,
+      "clarity": 4,
+      "completeness": 3,
+      "audience_fit": 3
+    },
+    "suggestions": [
+      "The two-level framing lumps `fund_details` into the 'catalog level' even though it is per-fund and requires a resolved ticker \u2014 regroup as catalog-wide (`products`) versus single-fund (`fund_details`, and `holdings` when filtered), which matches how an agent actually sequences calls.",
+      "Say which object carries which fact, since the split is non-obvious: yields, NAV, category and inception in `products`; expense ratio, net assets, shares outstanding, num_holdings and objective only in `fund_details`. An agent otherwise scans `products` looking for expense ratio.",
+      "Note that `holdings` also exists as a same-named table function (`FROM holdings()`) returning identical rows, so an agent that encounters it in a function listing does not treat it as a distinct object."
+    ],
+    "summary": "Correct but thin \u2014 it restates the catalog blurb without giving the fact-to-object routing map that makes a schema-level doc worth reading."
+  },
+  "be995b8758c23b83": {
+    "object": "firsttrust.main.holdings",
+    "kind": "table",
+    "scores": {
+      "accuracy": 4,
+      "clarity": 5,
+      "completeness": 4,
+      "audience_fit": 5
+    },
+    "suggestions": [
+      "\"Rows come back weight-descending\" is true only within a single fund's partition batch, and is not a guarantee SQL preserves once partitions interleave or an operator reorders. Either scope the claim to per-fund scans or drop it and lean on the existing `ORDER BY weight_percent DESC` examples; an agent that trusts it will omit ORDER BY on a multi-fund query and get interleaved output.",
+      "Reconcile the '~300 funds' figure with the catalog's actual ~316, and clarify NULL versus empty-string for `ticker` and `sector` \u2014 both comments say 'blank', but the parser maps the `-------` sentinel and empty cells to NULL, so `WHERE sector = ''` silently returns nothing and `WHERE sector IS NULL` is the correct predicate. The `GROUP BY sector` example will show a NULL bucket for bond funds.",
+      "Document that `market_value` is labeled 'Market Value / Notional Value' for fixed-income funds (so it is a notional, not a market value, for those rows), and that `shares_held` is shares for equity funds but par/units for bond funds \u2014 the DOUBLE type hides that the unit changes by fund type.",
+      "Add the constraint metadata an agent can exploit: `fund_ticker` is NOT NULL and `(fund_ticker, cusip)` is the advisory primary key, and there is deliberately no declared FK to `products.ticker` even though the join in the doc_llm is valid."
+    ],
+    "summary": "Strong partitioning and units guidance; the ordering guarantee overpromises and the 'blank' wording misleads on NULL semantics."
+  },
+  "70217354dd41eaca": {
+    "object": "firsttrust.main.products",
+    "kind": "table",
+    "scores": {
+      "accuracy": 5,
+      "clarity": 5,
+      "completeness": 3,
+      "audience_fit": 4
+    },
+    "suggestions": [
+      "`nav` has no as-of date column while the yields have `yield_as_of_date`, which reads as an oversight \u2014 say plainly that `nav` is the most recent closing NAV from the list page as of the (24h-cached) fetch, and that `yield_as_of_date` governs only the three `*_percent` columns.",
+      "Nulls are pervasive here (all three percent columns and `yield_as_of_date` are null for non-income funds) but only the column comments mention it; the doc_md should warn that a bare `ORDER BY sec_yield_30day_percent DESC` puts NULLs first in DuckDB, which is why the first example carries `IS NOT NULL` \u2014 an agent copying the second example without it gets a page of nulls.",
+      "The `category` comment lists shortened section names (Income, Sector & Industry, \u2026) while the stored values are the full section titles ('Income Funds', 'Sector & Industry Funds'), as the second example shows. Make the comment list the exact literals so equality predicates match on the first try."
+    ],
+    "summary": "Prose matches the columns well; the null-heavy percent columns and the truncated `category` literals are the two things most likely to break an agent's first query."
+  },
+  "20d69da3b226eb09": {
+    "object": "firsttrust.main.fund_details",
+    "kind": "table_function",
+    "scores": {
+      "accuracy": 3,
+      "clarity": 4,
+      "completeness": 2,
+      "audience_fit": 3
+    },
+    "suggestions": [
+      "The prose promises 'gross/net expense ratio' (two values) but the example selects a single `expense_ratio_percent`, and no output column list is published at all \u2014 enumerate the returned columns with names, types and units, and resolve whether the ratio columns are `gross_expense_ratio_percent`/`net_expense_ratio_percent` or one blended column. As written an agent cannot construct a SELECT list without a trial DESCRIBE.",
+      "Specify units per column rather than the blanket 'percent columns are in percent points': `net_assets` is plain USD, `num_holdings` is BIGINT, `shares_outstanding` and 'recent daily volume' are share counts, and 'recent daily volume' needs a window (30-day average? prior session?) to be interpretable.",
+      "Document the error contract and the resolution step: `fund` is validated against the cached catalog, and an unknown or misspelled ticker raises an ArgumentValidationError pointing at `products` rather than returning zero rows \u2014 that distinction changes how an agent writes its retry path.",
+      "Note the per-call cost (a ~2 MB summary page fetch, uncached) and that it takes exactly one ticker, so the way to enrich N funds is N calls, not a set-valued argument \u2014 otherwise an agent will try to pass a list or lateral-join it against all of `products`."
+    ],
+    "summary": "The weakest of the five: no output schema, an internal contradiction on gross-versus-net expense ratio, and no error or cost contract for the one object that performs a live per-call fetch."
+  }
+}
