@@ -237,6 +237,12 @@ export function makeHoldingsScan(client: FirsttrustClient) {
         "`fund_ticker`: filter `WHERE fund_ticker = 'FTCS'` for one fund, or scan with no filter " +
         "to stream every fund (see the example queries). `fund_ticker` is distinct from the " +
         "constituent `ticker` column.",
+      // Described mirror of the native `examples:` above (the duckdb_functions().examples
+      // carrier drops descriptions, so VGI515 reads them from this tag).
+      "vgi.example_queries": JSON.stringify([
+        { description: "Top 10 holdings of FTCS via the backing scan", sql: "SELECT name, weight_percent FROM firsttrust.main.holdings() WHERE fund_ticker = 'FTCS' ORDER BY weight_percent DESC LIMIT 10" },
+        { description: "Two partitions at once (fan-out)", sql: "SELECT fund_ticker, count(*) FROM firsttrust.main.holdings() WHERE fund_ticker IN ('FTCS', 'AIRR') GROUP BY fund_ticker" },
+      ]),
       "vgi.result_columns_schema": resultColumnsSchema(holdingsSchema(), HOLDINGS_SCAN_DESCS),
     },
   });
@@ -300,6 +306,12 @@ export function makeFundDetailsFunction(client: FirsttrustClient) {
         "`products` carries (expense ratio, net assets, shares outstanding, advisor, objective). " +
         "Percent columns are in percent points; `objective` is plain text.\n\n" +
         "It returns exactly one row; for the whole lineup use `products` (see the example queries).",
+      // Described mirror of the native `examples:` above (VGI515 — the
+      // duckdb_functions().examples carrier drops descriptions).
+      "vgi.example_queries": JSON.stringify([
+        { description: "Key facts for FTCS", sql: "SELECT ticker, net_assets, expense_ratio_percent, num_holdings FROM firsttrust.main.fund_details('FTCS')" },
+        { description: "The fund's investment objective (plain text)", sql: "SELECT objective FROM firsttrust.main.fund_details('FTCS')" },
+      ]),
       "vgi.result_columns_schema": resultColumnsSchema(fundDetailsSchema(), FUND_DETAILS_DESCS),
     },
   });
