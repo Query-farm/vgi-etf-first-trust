@@ -155,7 +155,8 @@ external errors.
   functions (VGI173); numeric column comments should state units (VGI131 — "per share in USD",
   "percent points"); argument docs must NOT restate the data type (VGI313); every function needs an
   agent test task (VGI520 — products/holdings table+function/fund_details are covered in `catalog.ts`
-  `vgi.agent_test_tasks`).
+  `vgi.agent_test_tasks`); the tag publishes only `name` + `prompt` — grader fields
+  (`check_sql`, `success_criteria`) live in the private root sidecar `vgi-agent-tests.yaml` (VGI416).
 - Don't add a secret type; this worker is keyless by design.
 - Keep the `holdings` current-only contract: do NOT add `supportsTimeTravel` or an as-of arg.
 - Products PK is `[ticker]` (First Trust exposes no catalog-level ISIN/CUSIP).

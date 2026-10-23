@@ -1,0 +1,23 @@
+# Private grader sidecar for `vgi-lint simulate` (and `lint`'s VGI520 coverage). The worker
+# publishes only task names + prompts in `vgi.agent_test_tasks` (src/catalog.ts); these
+# grader fields are keyed by that name and never sent to the analyst agent.
+#
+# Agent-suitability suite (catalog only). Each task carries a deterministic check_sql that
+# asserts specific ground truth; reference_sql is deliberately omitted (live data). One task
+# per callable surface (products, holdings table + holdings() function, fund_details) satisfies VGI520.
+tasks:
+  - name: "ftcs_exists"
+    check_sql: "SELECT count(*) > 0 FROM firsttrust.main.products WHERE ticker = 'FTCS'"
+    success_criteria: "The answer confirms FTCS is the First Trust Capital Strength ETF, found via the products table."
+
+  - name: "ftcs_expense_ratio"
+    check_sql: "SELECT count(*) > 0 FROM firsttrust.main.fund_details('FTCS') WHERE expense_ratio_percent IS NOT NULL"
+    success_criteria: "The answer reports FTCS's expense ratio (a small percentage) from fund_details."
+
+  - name: "ftcs_top_holding"
+    check_sql: "SELECT count(*) > 0 FROM firsttrust.main.holdings WHERE fund_ticker = 'FTCS'"
+    success_criteria: "The answer names FTCS's top holding by weight, obtained from the holdings table."
+
+  - name: "ftcs_holdings_function"
+    check_sql: "SELECT count(*) > 0 FROM firsttrust.main.holdings() WHERE fund_ticker = 'FTCS'"
+    success_criteria: "The answer returns FTCS constituents via the holdings() function filtered by fund_ticker."

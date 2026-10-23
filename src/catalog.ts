@@ -169,33 +169,25 @@ const CATALOG_TAGS: Record<string, string> = {
       sql: "SELECT ticker, net_assets, expense_ratio_percent FROM firsttrust.main.fund_details('FTCS')",
     },
   ]),
-  // Agent-suitability suite (catalog only). Each task carries a deterministic check_sql that
-  // asserts specific ground truth; reference_sql is deliberately omitted (live data). One task
-  // per callable surface (products, holdings table + holdings() function, fund_details) satisfies VGI520.
+  // The agent-suitability suite (catalog only). The published tag carries ONLY `name` +
+  // `prompt` — the grader fields (check_sql, success_criteria) live in the private sidecar
+  // vgi-agent-tests.yaml, keyed by name, so the analyst agent never sees them (VGI416).
   "vgi.agent_test_tasks": JSON.stringify([
     {
       name: "ftcs_exists",
       prompt: "Does First Trust offer an ETF with the ticker FTCS, and what is it called?",
-      check_sql: "SELECT count(*) > 0 FROM firsttrust.main.products WHERE ticker = 'FTCS'",
-      success_criteria: "The answer confirms FTCS is the First Trust Capital Strength ETF, found via the products table.",
     },
     {
       name: "ftcs_expense_ratio",
       prompt: "What is the expense ratio of the First Trust Capital Strength ETF (FTCS)?",
-      check_sql: "SELECT count(*) > 0 FROM firsttrust.main.fund_details('FTCS') WHERE expense_ratio_percent IS NOT NULL",
-      success_criteria: "The answer reports FTCS's expense ratio (a small percentage) from fund_details.",
     },
     {
       name: "ftcs_top_holding",
       prompt: "What is the single largest holding of the First Trust Capital Strength ETF (FTCS) right now?",
-      check_sql: "SELECT count(*) > 0 FROM firsttrust.main.holdings WHERE fund_ticker = 'FTCS'",
-      success_criteria: "The answer names FTCS's top holding by weight, obtained from the holdings table.",
     },
     {
       name: "ftcs_holdings_function",
       prompt: "Using the holdings() table function, list a few FTCS constituents by weight.",
-      check_sql: "SELECT count(*) > 0 FROM firsttrust.main.holdings() WHERE fund_ticker = 'FTCS'",
-      success_criteria: "The answer returns FTCS constituents via the holdings() function filtered by fund_ticker.",
     },
   ]),
 };

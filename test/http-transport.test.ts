@@ -25,6 +25,7 @@ import { httpConnect } from "@query-farm/vgi-rpc";
 import { makeProductsScan, makeHoldingsScan, makeFundDetailsFunction } from "../src/functions.js";
 import { makeCatalog } from "../src/catalog.js";
 import { makeFirsttrustClient } from "../src/client.js";
+import pkg from "../package.json" with { type: "json" };
 
 const PREFIX = "/vgi";
 // Static 32-byte HMAC key — the HTTP handler signs state tokens with it.
@@ -52,6 +53,7 @@ beforeAll(() => {
     protocol: { registry, catalogInterface },
     signingKey: SIGNING_KEY,
     prefix: PREFIX,
+    landingInfo: { name: "firsttrust", doc: "First Trust ETF data", version: pkg.version },
   });
 
   server = Bun.serve({ port: 0, fetch });
