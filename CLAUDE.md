@@ -52,12 +52,14 @@ scan streams every fund** (one partition per fund). Mechanics:
 - **`fund_ticker` is a SEPARATE column from `ticker`** — `ticker` is the CONSTITUENT's own
   identifier (blank for some fixed-income lines); `fund_ticker` is the fund's ticker, constant per
   fund. The scan tags every row with the requested fund ticker, upper-cased.
-- Constraints: `products` advisory PK `[ticker]` (First Trust exposes no catalog-level ISIN),
-  `holdings` `notNull [fund_ticker]` + advisory composite PK `(fund_ticker, cusip)` (the fund plus
-  the constituent's canonical security identifier). No cross-table FK: fund_ticker→products.ticker
+- Constraints (vgi.v3 canonical `constraintRecord()`s in `constraints`; served as ENFORCED engine
+  facts, so they must hold on every scan): `products` PK `[ticker]` (First Trust exposes no
+  catalog-level ISIN), `holdings` NOT_NULL `fund_ticker` and **no PK** — cusip is blank for
+  futures/cash/swap lines, constituent ticker is blank for most bonds, and names repeat in muni
+  funds, so no column combination is a true key. No cross-table FK: fund_ticker→products.ticker
   is a real relationship but declaring it would force a live VGI810 data-probe of the whole
-  (unfiltered) holdings stream, and VGI809 does not fire, so it's intentionally left off. No
-  `vgi-lint.toml` rule waivers — the metadata passes `--fail-on info` on its own.
+  (unfiltered) holdings stream, and VGI809 does not fire, so it's intentionally left off. The only
+  `vgi-lint.toml` waiver is a per-object VGI807 domain exemption for `holdings` (no true key).
 
 ## The three scrape planes (server-rendered ASP.NET HTML — NOT a JSON API)
 

@@ -6,7 +6,7 @@
 // catalog-qualified (firsttrust.main.<obj>) so it binds/runs when the catalog is attached.
 
 import type { CatalogDescriptor, VgiFunction } from "@query-farm/vgi";
-import { Arguments } from "@query-farm/vgi";
+import { Arguments, constraintRecord } from "@query-farm/vgi";
 import {
   productsSchema,
   holdingsSchema,
@@ -251,8 +251,15 @@ export function makeCatalog(
             name: "products",
             function: productsScan,
             arguments: new Arguments([], new Map()),
-            // Each fund is keyed by its exchange ticker (advisory — not enforced on scan).
-            primaryKey: [["ticker"]],
+            // Each fund is keyed by its exchange ticker. vgi.v3 serves this as an ENFORCED engine
+            // fact, which the scan guarantees: parseProducts emits one row per distinct ticker and
+            // never a NULL ticker.
+            constraints: [
+              constraintRecord({
+                schemaPath: ["main"], table: "products", id: "products.pk",
+                kind: "PRIMARY_KEY", columns: [["ticker"]], enforcement: "ENFORCED", validation: "ALL_ROWS",
+              }),
+            ],
             // The First Trust US ETF lineup is ~316 funds; headroom to ~500.
             inlinedCardinality: { estimate: 316n, max: 500n },
             comment:
@@ -266,11 +273,16 @@ export function makeCatalog(
             function: holdingsScan,
             arguments: new Arguments([], new Map()),
             // fund_ticker is always populated (the scan tags every row with its fund).
-            notNull: ["fund_ticker"],
-            // Advisory composite identity of a holding row: the fund (fund_ticker) plus the
-            // constituent security's CUSIP — the canonical, per-fund-unique security identifier.
-            // Advisory only (not enforced on the live scan), like products' [ticker].
-            primaryKey: [["fund_ticker"], ["cusip"]],
+            // No PRIMARY KEY: vgi.v3 serves key records as ENFORCED engine facts, and no column
+            // combination holds on the live data. cusip is blank for futures, cash and swap lines
+            // (~8% of rows), the constituent ticker is blank for most bonds, and security names
+            // repeat within muni funds, so the old advisory (fund_ticker, cusip) key would be false.
+            constraints: [
+              constraintRecord({
+                schemaPath: ["main"], table: "holdings", id: "holdings.fund_ticker.not_null",
+                kind: "NOT_NULL", columns: [["fund_ticker"]], enforcement: "ENFORCED", validation: "ALL_ROWS",
+              }),
+            ],
             // Hive partition key: fund_ticker. A WHERE fund_ticker = … / IN (…) filter is pushed
             // down to fetch just those funds; an unfiltered scan streams every fund (all partitions).
             // First Trust publishes current holdings only, so there is NO time travel.

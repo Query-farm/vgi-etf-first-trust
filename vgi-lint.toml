@@ -1,6 +1,11 @@
-# No rule waivers, no ignore list, no execution override. The worker's metadata passes
-# `--fail-on info` on its own. `fail_on = "info"` is intentionally STRICTER than the default
-# (which fails only on errors); `select = ["ALL"]` runs every rule.
+# No execution override. `fail_on = "info"` is intentionally STRICTER than the default (which
+# fails only on errors); `select = ["ALL"]` runs every rule. The only waiver is a per-object
+# domain exemption for VGI807 on holdings (see below); everything else passes on its own.
 [tool.vgi-lint-check]
 select = ["ALL"]
 fail_on = "info"
+
+[tool.vgi-lint-check.per_object]
+"firsttrust.main.holdings" = { ignore = [
+  { code = "VGI807", kind = "domain-exemption", reason = "no guaranteed-unique non-null key in First Trust holdings (blank cusip on futures/cash/swap lines, blank constituent ticker on bonds, repeated muni names); vgi.v3 PKs are enforced facts" },
+] }
