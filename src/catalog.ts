@@ -118,6 +118,7 @@ const HOLDINGS_TABLE_TAGS: Record<string, string> = {
 /** Catalog-level tags: docs, discovery, provenance, and the agent-test suite. */
 const CATALOG_TAGS: Record<string, string> = {
   "vgi.title": "First Trust ETFs",
+  "vgi.subtitle": "Screen First Trust US ETFs and see each fund's facts and current holdings.",
   "vgi.doc_llm":
     "First Trust US ETF data as SQL. Reach for it to screen the ETF lineup on key facts (yield, " +
     "distribution rate, fund-type category), to pull a fund's deeper facts (expense ratio, net " +
