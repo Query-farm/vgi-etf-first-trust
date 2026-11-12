@@ -22,7 +22,7 @@ const { registry, catalogInterface } = makeWorkerParts();
 serveVgiWorker({
   name: "firsttrust",
   doc: "First Trust US ETF data: product catalog, fund details, and current holdings.",
-  version: "0.3.0",
+  version: "0.4.0",
   repositoryUrl: "https://github.com/Query-farm/vgi-etf-first-trust",
   serverId: "vgi-etf-first-trust",
   registry,
