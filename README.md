@@ -256,3 +256,7 @@ First Trust Advisors L.P.
 ## License
 
 MIT — Copyright 2026 Query Farm LLC · https://query.farm
+
+## Notebooks
+
+[Executed current-holdings concentration walkthrough](notebooks/README.md) compares FTCS and AIRR with a separate top-ten experiment.
