@@ -12,7 +12,7 @@ import {
   ETFLIST_URL,
   summaryUrl,
 } from "../src/firsttrust.js";
-import { FakeFirsttrust, defaultEtflistHtml } from "./fake-firsttrust.js";
+import { FakeFirsttrust, defaultEtflistHtml, etflistHtml, FTCS_FUND } from "./fake-firsttrust.js";
 
 const HTML = defaultEtflistHtml;
 
@@ -41,6 +41,13 @@ test("parseProducts maps every fund row with its section category", () => {
   const fthi = rows.find((r) => r.ticker === "FTHI")!;
   expect(fthi.category).toBe("Income Funds");
   expect(fthi.distributionRate12mPercent).toBe(8.77);
+});
+
+test("parseProducts strips trademark marks from the section category", () => {
+  // Live First Trust caption: `Target Outcome Funds<sup>&reg;</sup>` — the category must read
+  // 'Target Outcome Funds' so `WHERE category = 'Target Outcome Funds'` matches.
+  const html = etflistHtml([{ category: "Target Outcome Funds<sup>&reg;</sup>", funds: [FTCS_FUND] }]);
+  expect(parseProducts(html).map((r) => r.category)).toEqual(["Target Outcome Funds"]);
 });
 
 test("parseProducts degrades the '-------' and blank sentinels to null", () => {

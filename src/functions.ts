@@ -12,6 +12,8 @@ import {
   deserializeFilters,
   DEFAULT_MAX_WORKERS,
   type OutputCollector,
+  type PushdownFilters,
+  type VgiBatch,
 } from "@query-farm/vgi";
 import { Schema, Field, Utf8 } from "@query-farm/apache-arrow";
 import { fetchProducts, fetchHoldings, fetchFundDetails, resolveFund } from "./firsttrust.js";
@@ -25,6 +27,7 @@ import {
   resultColumnsSchema,
 } from "./schema.js";
 import type { FirsttrustClient } from "./client.js";
+import { FTCS_HOLDINGS_RECONCILIATION } from "./examples.js";
 
 // Per-column descriptions for the `vgi.result_columns_schema` tag (JSON [{name,type,description}],
 // generated from each Arrow schema via resultColumnsSchema).
@@ -52,6 +55,16 @@ const FUND_DETAILS_DESCS: Record<string, string> = {
   net_expense_ratio_percent: "Net expense ratio after fee waivers, percent points.",
   objective: "The fund's investment objective / strategy, plain text.",
 };
+
+/**
+ * Keep only the rows of `batch` that satisfy every filter DuckDB pushed into a scan. A pushed
+ * filter is removed from DuckDB's own plan, so a filter-pushdown scan must apply all of them
+ * (not only the fund_ticker partition key it uses to pick funds) or the query returns
+ * unfiltered rows — e.g. `WHERE ticker = 'NVDA'` would return every fund's whole portfolio.
+ */
+export function applyPushedFilters(filters: PushdownFilters | undefined, batch: VgiBatch): VgiBatch {
+  return filters ? filters.apply(batch) : batch;
+}
 
 interface DoneState {
   done: boolean;
@@ -213,7 +226,12 @@ export function makeHoldingsScan(client: FirsttrustClient) {
         const fund = decodeFund(item);
         const rows = await fetchHoldings(client.get, fund.ticker);
         if (rows.length === 0) continue;
-        out.emit(holdingsBatch(schema, rows), partitionValues(fund.ticker));
+        // Honor EVERY pushed filter, not just fund_ticker: DuckDB drops the predicates it pushes
+        // into the scan from its own plan, so `AND ticker = 'NVDA'` (or any other column filter)
+        // would otherwise silently return the whole fund.
+        const batch = applyPushedFilters(p.pushdownFilters, holdingsBatch(schema, rows));
+        if (batch.numRows === 0) continue;
+        out.emit(batch, partitionValues(fund.ticker));
         return;
       }
     },
@@ -292,6 +310,7 @@ export function makeFundDetailsFunction(client: FirsttrustClient) {
     examples: [
       { sql: "SELECT ticker, net_assets, expense_ratio_percent, num_holdings FROM firsttrust.main.fund_details('FTCS')", description: "Key facts for FTCS" },
       { sql: "SELECT objective FROM firsttrust.main.fund_details('FTCS')", description: "The fund's investment objective (plain text)" },
+      FTCS_HOLDINGS_RECONCILIATION,
     ],
     tags: {
       "vgi.category": "catalog",
@@ -312,6 +331,7 @@ export function makeFundDetailsFunction(client: FirsttrustClient) {
       "vgi.example_queries": JSON.stringify([
         { description: "Key facts for FTCS", sql: "SELECT ticker, net_assets, expense_ratio_percent, num_holdings FROM firsttrust.main.fund_details('FTCS')" },
         { description: "The fund's investment objective (plain text)", sql: "SELECT objective FROM firsttrust.main.fund_details('FTCS')" },
+        FTCS_HOLDINGS_RECONCILIATION,
       ]),
       "vgi.result_columns_schema": resultColumnsSchema(fundDetailsSchema(), FUND_DETAILS_DESCS),
     },

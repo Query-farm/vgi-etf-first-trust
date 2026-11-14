@@ -49,3 +49,18 @@ query I
 SELECT (count(*) > 40)::INT FROM ft.holdings() WHERE fund_ticker = 'FTCS';
 ----
 1
+
+# A pushed filter on a non-partition column is honored (regression: the scan used only the
+# fund_ticker filter, so `AND ticker = …` returned the whole fund).
+query I
+SELECT (count(*) = 1)::INT FROM ft.holdings WHERE fund_ticker = 'FTCS'
+  AND ticker = (SELECT ticker FROM ft.holdings WHERE fund_ticker = 'FTCS' AND ticker <> '' ORDER BY weight_percent DESC LIMIT 1);
+----
+1
+
+# Composed: products picks the funds by category and the join key is pushed into holdings.
+query I
+SELECT (count(DISTINCT h.fund_ticker) = (SELECT count(*) FROM ft.products WHERE category = 'Alternative Funds'))::INT
+FROM ft.products p JOIN ft.holdings h ON h.fund_ticker = p.ticker WHERE p.category = 'Alternative Funds';
+----
+1

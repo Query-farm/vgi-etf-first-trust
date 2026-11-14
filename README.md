@@ -170,6 +170,24 @@ FROM firsttrust.fund_details('FTCS');
 SELECT objective FROM firsttrust.fund_details('FTCS');
 ```
 
+### Combining them
+
+`holdings.fund_ticker` joins to `products.ticker`, and the join key is pushed into the holdings
+scan, so a `products` filter decides which funds' holdings are fetched:
+
+```sql
+-- Concentration screen of the Sector & Industry funds: holding lines and top-10 weight per fund:
+SELECT p.ticker, p.fund_name, count(*) AS positions,
+       round(sum(h.weight_percent) FILTER (WHERE h.rn <= 10), 2) AS top10_weight_percent
+FROM firsttrust.products p
+JOIN (SELECT fund_ticker, weight_percent,
+             row_number() OVER (PARTITION BY fund_ticker ORDER BY weight_percent DESC) AS rn
+      FROM firsttrust.holdings) h ON h.fund_ticker = p.ticker
+WHERE p.category = 'Sector & Industry Funds'
+GROUP BY p.ticker, p.fund_name
+ORDER BY top10_weight_percent DESC;
+```
+
 ## Development
 
 ```bash

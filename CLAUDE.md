@@ -49,6 +49,9 @@ scan streams every fund** (one partition per fund). Mechanics:
   `fetchHoldings` (it catches the fetch); `process()` skips it and pops the next, so an all-funds
   scan never fails on one missing fund.
 - **`filterPushdown: true`** + LISTED → the extension pushes the `fund_ticker` filter into the scan.
+- **Apply EVERY pushed filter.** DuckDB removes pushed predicates from its own plan, so
+  `process()` runs `applyPushedFilters` on each fund's batch — not just the fund_ticker key it
+  uses to pick funds — or `AND ticker = 'NVDA'` returns the whole fund (test/pushdown.test.ts).
 - **`fund_ticker` is a SEPARATE column from `ticker`** — `ticker` is the CONSTITUENT's own
   identifier (blank for some fixed-income lines); `fund_ticker` is the fund's ticker, constant per
   fund. The scan tags every row with the requested fund ticker, upper-cased.

@@ -13,6 +13,11 @@ import {
   fundDetailsSchema,
   resultColumnsSchema,
 } from "./schema.js";
+import {
+  ALT_FUNDS_TOP_POSITIONS,
+  SECTOR_FUND_CONCENTRATION,
+  FTCS_HOLDINGS_RECONCILIATION,
+} from "./examples.js";
 
 const REPO = "https://github.com/Query-farm/vgi-etf-first-trust";
 const ISSUES = `${REPO}/issues`;
@@ -62,6 +67,7 @@ const PRODUCTS_TABLE_TAGS: Record<string, string> = {
     { description: "Highest 30-day SEC yields in the lineup", sql: "SELECT ticker, fund_name, sec_yield_30day_percent FROM firsttrust.main.products WHERE sec_yield_30day_percent IS NOT NULL ORDER BY sec_yield_30day_percent DESC LIMIT 10" },
     { description: "Every income fund", sql: "SELECT ticker, fund_name, distribution_rate_12m_percent FROM firsttrust.main.products WHERE category = 'Income Funds' ORDER BY distribution_rate_12m_percent DESC" },
     { description: "Look up a single fund by ticker", sql: "SELECT ticker, fund_name, inception_date, nav FROM firsttrust.main.products WHERE ticker = 'FTCS'" },
+    SECTOR_FUND_CONCENTRATION,
   ]),
   "vgi.result_columns_schema": resultColumnsSchema(productsSchema(), PRODUCTS_COLUMN_COMMENTS),
 };
@@ -112,6 +118,7 @@ const HOLDINGS_TABLE_TAGS: Record<string, string> = {
     { description: "Top 10 current holdings of FTCS", sql: "SELECT name, ticker, weight_percent FROM firsttrust.main.holdings WHERE fund_ticker = 'FTCS' ORDER BY weight_percent DESC LIMIT 10" },
     { description: "The sector mix of a fund", sql: "SELECT sector, sum(weight_percent) AS weight FROM firsttrust.main.holdings WHERE fund_ticker = 'FTCS' GROUP BY sector ORDER BY weight DESC" },
     { description: "Two funds at once (partition fan-out)", sql: "SELECT fund_ticker, name, weight_percent FROM firsttrust.main.holdings WHERE fund_ticker IN ('FTCS', 'AIRR')" },
+    ALT_FUNDS_TOP_POSITIONS,
   ]),
 };
 
@@ -190,6 +197,14 @@ const CATALOG_TAGS: Record<string, string> = {
       name: "ftcs_holdings_function",
       prompt: "Using the holdings() table function, list a few FTCS constituents by weight.",
     },
+    {
+      name: "sector_funds_holding_nvda",
+      prompt:
+        "Which First Trust Sector & Industry funds currently hold NVIDIA (constituent ticker NVDA), " +
+        "and at what weight? Save your answer as a temp table named nvda_holders with columns " +
+        "fund_ticker (VARCHAR, the fund's ticker) and weight_percent (DOUBLE, percent points), one " +
+        "row per fund.",
+    },
   ]),
 };
 
@@ -217,6 +232,9 @@ const SCHEMA_TAGS: Record<string, string> = {
   "vgi.example_queries": JSON.stringify([
     { description: "Highest-yielding First Trust ETFs", sql: "SELECT ticker, fund_name, sec_yield_30day_percent FROM firsttrust.main.products WHERE sec_yield_30day_percent IS NOT NULL ORDER BY sec_yield_30day_percent DESC LIMIT 10" },
     { description: "Top holdings of FTCS", sql: "SELECT name, ticker, weight_percent FROM firsttrust.main.holdings WHERE fund_ticker = 'FTCS' ORDER BY weight_percent DESC LIMIT 10" },
+    ALT_FUNDS_TOP_POSITIONS,
+    SECTOR_FUND_CONCENTRATION,
+    FTCS_HOLDINGS_RECONCILIATION,
   ]),
 };
 

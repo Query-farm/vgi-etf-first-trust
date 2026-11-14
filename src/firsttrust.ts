@@ -158,7 +158,10 @@ export function parseProducts(html: string, ticker = ""): ProductRow[] {
   const secRe = /lblETFSectionTitle[^>]*>([\s\S]*?)<\/span>/g;
   let sm: RegExpExecArray | null;
   while ((sm = secRe.exec(html)) !== null) {
-    sections.push({ pos: sm.index, category: cleanText(sm[1]!) });
+    // Drop trademark marks: the live caption is "Target Outcome Funds<sup>&reg;</sup>", which
+    // would otherwise surface as 'Target Outcome Funds ®' and miss a plain-name WHERE filter.
+    const category = cleanText(sm[1]!).replace(/\s*[®™]/g, "").trim();
+    sections.push({ pos: sm.index, category });
   }
   const categoryFor = (pos: number): string | null => {
     let cat: string | null = null;

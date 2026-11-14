@@ -5,6 +5,8 @@
 # Agent-suitability suite (catalog only). Each task carries a deterministic check_sql that
 # asserts specific ground truth; reference_sql is deliberately omitted (live data). One task
 # per callable surface (products, holdings table + holdings() function, fund_details) satisfies VGI520.
+# Composed tasks (products × holdings) ask the agent to save its answer in a temp table; the
+# check_sql recomputes the live truth and compares, so a wrong answer fails.
 tasks:
   - name: "ftcs_exists"
     check_sql: "SELECT count(*) > 0 FROM firsttrust.main.products WHERE ticker = 'FTCS'"
@@ -21,3 +23,22 @@ tasks:
   - name: "ftcs_holdings_function"
     check_sql: "SELECT count(*) > 0 FROM firsttrust.main.holdings() WHERE fund_ticker = 'FTCS'"
     success_criteria: "The answer returns FTCS constituents via the holdings() function filtered by fund_ticker."
+
+  - name: "sector_funds_holding_nvda"
+    check_sql: >-
+      WITH truth AS (
+        SELECT h.fund_ticker, h.weight_percent
+        FROM firsttrust.main.products p
+        JOIN firsttrust.main.holdings h ON h.fund_ticker = p.ticker
+        WHERE p.category = 'Sector & Industry Funds' AND h.ticker = 'NVDA'
+      )
+      SELECT (SELECT count(*) FROM truth) > 0
+      AND (SELECT count(*) FROM nvda_holders) = (SELECT count(*) FROM truth)
+      AND NOT EXISTS (
+        SELECT 1 FROM truth t
+        LEFT JOIN nvda_holders a
+          ON upper(trim(a.fund_ticker)) = t.fund_ticker
+          AND abs(a.weight_percent - t.weight_percent) < 0.005
+        WHERE a.fund_ticker IS NULL
+      )
+    success_criteria: "The answer lists every Sector & Industry fund holding NVDA (found by joining products to holdings) with its weight, saved in nvda_holders."

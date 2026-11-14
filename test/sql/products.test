@@ -52,3 +52,15 @@ query I
 SELECT (count(DISTINCT category) >= 1)::INT FROM ft.products WHERE category IS NOT NULL;
 ----
 1
+
+# Category names carry no trademark marks (the live caption is `Target Outcome Funds<sup>&reg;</sup>`),
+# so filtering by the plain section name matches.
+query I
+SELECT (count(*) > 0)::INT FROM ft.products WHERE category = 'Target Outcome Funds';
+----
+1
+
+query I
+SELECT count(*) FROM ft.products WHERE category LIKE '%®%' OR category LIKE '%™%';
+----
+0
