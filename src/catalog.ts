@@ -132,7 +132,8 @@ const CATALOG_TAGS: Record<string, string> = {
     "assets, objective), and to inspect what a fund currently holds. The central concept is the " +
     "fund, identified by its exchange ticker (e.g. FTCS); start from the catalog to find that " +
     "key, then drill into a fund's details or holdings. Data is First Trust's public fund " +
-    "website: best-effort, for informational use.",
+    "website: best-effort, for informational use." +
+    " Upstream source: https://www.ftportfolios.com/retail/etf/etflist.aspx.",
   "vgi.doc_md":
     "## First Trust ETFs\n\n" +
     "First Trust US ETF data, exposed as DuckDB tables and a table function.\n\n" +
@@ -140,6 +141,11 @@ const CATALOG_TAGS: Record<string, string> = {
     "begin at the catalog to discover that key, then drill into a fund's deeper facts or its " +
     "holdings. Holdings are the current published portfolio (First Trust does not publish " +
     "historical holdings).\n\n" +
+    "### Sources\n\n" +
+    "- [First Trust ETF list](https://www.ftportfolios.com/retail/etf/etflist.aspx) — the fund lineup the catalog is read from.\n" +
+    "- [Example fund summary (FTCS)](https://www.ftportfolios.com/Retail/Etf/EtfSummary.aspx?Ticker=FTCS) — the per-fund summary pages behind fund_details (holdings come from the matching EtfHoldings page).\n" +
+    "- [First Trust legal information](https://www.ftportfolios.com/retail/legal.aspx) — terms that govern use of the site's data.\n" +
+    "\n" +
     "Data is provided for informational use; review First Trust's terms before redistribution.",
   "vgi.keywords": JSON.stringify([
     "ETF",
