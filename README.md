@@ -37,7 +37,7 @@ Every [GitHub release](https://github.com/Query-farm/vgi-etf-first-trust/release
 INSTALL vgi FROM community;
 LOAD vgi;
 
-ATTACH 'firsttrust' AS firsttrust (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-etf-first-trust@v0.4.2');
+ATTACH 'firsttrust' AS firsttrust (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-etf-first-trust@v0.4.3');
 
 -- First Trust income ETFs by 12-month distribution rate
 SELECT ticker, fund_name, distribution_rate_12m_percent FROM firsttrust.main.products WHERE category = 'Income Funds' ORDER BY distribution_rate_12m_percent DESC LIMIT 5;
@@ -46,7 +46,7 @@ SELECT ticker, fund_name, distribution_rate_12m_percent FROM firsttrust.main.pro
 SELECT name, ticker, weight_percent FROM firsttrust.main.holdings WHERE fund_ticker = 'FTCS' ORDER BY weight_percent DESC LIMIT 5;
 ```
 
-Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.4.2` to move to a newer release.
+Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.4.3` to move to a newer release.
 
 ### Other ways to run it
 
